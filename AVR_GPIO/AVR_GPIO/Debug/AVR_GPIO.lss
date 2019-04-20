@@ -11,21 +11,21 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
   3 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  000001bc  2**2
                   CONTENTS, READONLY
-  4 .debug_aranges 00000040  00000000  00000000  000001fc  2**0
+  4 .debug_aranges 00000058  00000000  00000000  000001fc  2**0
                   CONTENTS, READONLY, DEBUGGING
-  5 .debug_info   000009f1  00000000  00000000  0000023c  2**0
+  5 .debug_info   00000a97  00000000  00000000  00000254  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_abbrev 00000928  00000000  00000000  00000c2d  2**0
+  6 .debug_abbrev 0000095e  00000000  00000000  00000ceb  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_line   000002da  00000000  00000000  00001555  2**0
+  7 .debug_line   00000372  00000000  00000000  00001649  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_frame  0000007c  00000000  00000000  00001830  2**2
+  8 .debug_frame  000000ac  00000000  00000000  000019bc  2**2
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_str    0000048f  00000000  00000000  000018ac  2**0
+  9 .debug_str    000004dc  00000000  00000000  00001a68  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_loc    0000005e  00000000  00000000  00001d3b  2**0
+ 10 .debug_loc    0000007f  00000000  00000000  00001f44  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_ranges 00000030  00000000  00000000  00001d99  2**0
+ 11 .debug_ranges 00000048  00000000  00000000  00001fc3  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -92,11 +92,11 @@ Disassembly of section .text:
 
 000000cc <__vector_11>:
 
-void Timer_Frequency(uint8_t freq){
-	TCCR1B |= (1<<CS12) | (1<<WGM12);
-	TIMSK1 |= (1<<OCIE1A);
-	// =F_CPU/frequency*2*N - 1
-	OCR1A = (F_CPU / (freq * 2 * 256) - 1);	
+void milliS_Timer(uint8_t milliS){
+	TCCR0A |= (1<<WGM01); // CTC mode
+	TCCR0B |= (1<<CS02) | (1<<CS00); //prescalar of 1024
+	OCR0A = milliS*7,8125-1;
+	TIMSK0 |= (1<<OCIE0A);
   cc:	1f 92       	push	r1
   ce:	0f 92       	push	r0
   d0:	0f b6       	in	r0, 0x3f	; 63
@@ -126,11 +126,11 @@ void Timer_Frequency(uint8_t freq){
 }
 
 void PWM_Init(void){
-	TCCR1B |= (1<<CS10) | (1<<WGM12); // CTC mode
+	TCCR1B |= (1<<CS12) | (1<<WGM12); // CTC mode
   f8:	e1 e8       	ldi	r30, 0x81	; 129
   fa:	f0 e0       	ldi	r31, 0x00	; 0
   fc:	80 81       	ld	r24, Z
-  fe:	89 60       	ori	r24, 0x09	; 9
+  fe:	8c 60       	ori	r24, 0x0C	; 12
  100:	80 83       	st	Z, r24
 	TIMSK1 |= (1<<OCIE1A) | (1<<OCIE1B);
  102:	ef e6       	ldi	r30, 0x6F	; 111
@@ -139,12 +139,12 @@ void PWM_Init(void){
  108:	86 60       	ori	r24, 0x06	; 6
  10a:	80 83       	st	Z, r24
 	
-	OCR1A = 800; // (F_CPU / (10000*2*1) - 1)
- 10c:	80 e2       	ldi	r24, 0x20	; 32
+	OCR1A = (F_CPU / (40 * 2 * 256) - 1); // 16000000 / (20480)
+ 10c:	8c e0       	ldi	r24, 0x0C	; 12
  10e:	93 e0       	ldi	r25, 0x03	; 3
  110:	90 93 89 00 	sts	0x0089, r25	; 0x800089 <__TEXT_REGION_LENGTH__+0x7e0089>
  114:	80 93 88 00 	sts	0x0088, r24	; 0x800088 <__TEXT_REGION_LENGTH__+0x7e0088>
-	OCR1B = 400;
+	OCR1B = 800*.5;
  118:	80 e9       	ldi	r24, 0x90	; 144
  11a:	91 e0       	ldi	r25, 0x01	; 1
  11c:	90 93 8b 00 	sts	0x008B, r25	; 0x80008b <__TEXT_REGION_LENGTH__+0x7e008b>
@@ -160,7 +160,7 @@ int main(void){
  126:	25 9a       	sbi	0x04, 5	; 4
 	DDRB &= ~(1<<DDB7);
  128:	27 98       	cbi	0x04, 7	; 4
-	
+	//milliS_Timer(2);
 	//Timer_Frequency(1);
 	PWM_Init();
  12a:	0e 94 7c 00 	call	0xf8	; 0xf8 <PWM_Init>
