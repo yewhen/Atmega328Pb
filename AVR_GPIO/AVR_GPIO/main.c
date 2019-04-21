@@ -5,6 +5,7 @@
  * Author : User
  */ 
 #include <math.h>
+
 #include <avr/io.h>
 //#include <USART_irq.h>
 #include <util/delay.h>
@@ -37,7 +38,7 @@ ISR(TIMER0_COMPA_vect){
 
 }*/
 
-void PWM_Increse_duty(){
+void PWM_Increase_duty(){
 	uint16_t period = OCR1A;
 	uint16_t duty = OCR1B;
 
@@ -110,25 +111,103 @@ void USART_putstring(char* strptr){
 	}
 }
 
+uint16_t rising, falling;
+int counts;
+float dist = 0.0;
+uint16_t us_per_count;
+
+
+ISR(TIMER1_COMPA_vect){
+
+	//Generate a 12us pulse to trigger the HR-SR04
+	PORTB ^= ( 1 << PORTB2);
+	_delay_us(12);
+	PORTB ^= ( 1 << PORTB2);
+	LED_ON;
+}
+
+ISR(TIMER1_CAPT_vect){
+
+	if(TCCR1B & (1 << ICES1)){
+
+		TCCR1B &= ~( 1 << ICES1);
+		rising = ICR1;
+	}
+	else{
+		TCCR1B |= (1 << ICES1);
+		falling = ICR1;
+		counts = falling - rising;
+		dist = (float)us_per_count * counts * 10 / 580;
+	}
+	LED_OFF;
+}
+
+
+void init_ultrasonic_sensor(){
+
+	//PORTB2 as output (Arduino PIN 10)
+	DDRB |= (1 << PORTB2);
+
+	//****TIMER1 INIT****//
+
+	//noice reduction enable
+	TCCR1B |= (1<<ICNC1);
+
+	//Prescale to 64
+	TCCR1B |= (1<<CS10) | (1<<CS11);
+
+	//select CTC mode
+	TCCR1B |= (1<<WGM12);
+
+	//read Int. at: rising edge, falling edge
+	TIMSK1 |= (1<<ICIE1) | (1<<OCIE1A);
+
+	//read Int. at rising edge
+	TCCR1B |= (1<<ICES1);
+
+	//calculate TOP (70ms runtime for one cycle): 16MHz/64 = 25000 count/sec. = 25000/1000 = 2500 count/us / 100*70 = 17500 count/70ms
+	OCR1A = 17500;
+
+	//CPU-speed / Prescale = cycles/sec. 1sec/ freq./sec. = 4 (t= 4us/cycle)
+	us_per_count = 4;
+
+	sei();
+
+}
+
+float read_dist(){
+	return dist;
+}
+
 int main(void){
+	
+	init_ultrasonic_sensor();
     
 	//DDRB |= (1<<DDB5);
 	//DDRB &= ~(1<<DDB7);
-	sei();
-	char str[] = "Hello World!";
-	USART_Init(MYUBBR);
+	//sei();
+	//char str[] = "Hello World!";
+	//USART_Init(MYUBBR);
 
-	USART_putstring(str);
+	
 
-    while (1){
+    /*while (1){
 		
-		/*if (!(PINB & (1<<PINB7))){
+		if (!(PINB & (1<<PINB7))){
 			LED_ON;
 		}
 		else{
 			LED_OFF;
-		}*/
+		}
+	}*/
+	while(1){
+		//printf("dist: %f", dist);
+ 
+		//USART_putstring(&dist);
+		
+		//if (dist == 0.0) LED_ON;
 	}
+	
 	return 0;
 }
 
