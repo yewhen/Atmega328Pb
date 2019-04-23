@@ -13,11 +13,13 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
+#define F_CPU				16000000UL // 16MHz
 #define LED_ON				PORTB |= (1<<PORTB5)
 #define LED_OFF				PORTB &= ~(1<<PORTB5)
 #define LED_TOGGLE			PINB |= (1<<PINB5)
 
-void PWM_Init();
+void PWM_Init_16();
+void PWM_Init_8();
 void PWM_Increase_duty();
 void PWM_Decrease_duty();
 void Timer_Frequency(uint8_t freq);

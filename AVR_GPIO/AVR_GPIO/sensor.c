@@ -61,26 +61,22 @@ void Sensor_Init(){
 	DDRB |= (1<<DDB3);
 	
 	// Echo Pin Setup: PD2(EXTINT0), PD3(EXTINT1), PB5(PCINT0), PE0(PCINT3) 
-	//DDRD &= ~(1<<DDD3); 
-	DDRD &= ~(1<<DDD2);
+	DDRD &= ~(1<<DDD2); 
+	//DDRD &= ~(1<<DDD3);
 	//DDRB &= ~(1<<DDB4);
-	//DDRE &= ~(1<<DDE0);
 
 	// Turn on the pull-up
 	PORTD |= (1<<PORTD2)/* | (1<<PORTD3)*/;
 	//PORTB |= (1<<PORTB4);
-	//PORTE |= (1<<PORTE0);
 
 	_delay_ms(50);
 
 	// Enable the Interrupt
-	sei();
-	EICRA |= (1<<ISC00)/* | (1<<ISC10)*/; // Set INT0 & INT1 to trigger on ANY logic change
+	EICRA |= (1<<ISC00) /*| (1<<ISC10)*/; // Set INT0 & INT1 to trigger on ANY logic change
 	EIMSK |= (1<<INT0)/* | (1<<INT1)*/;  // Turns on INT0 & INT1
 	
-	//PCICR |= (1<<PCIE3) | (1<<PCIE0); 
-	//PCMSK0 |= (1<<PCINT4);
-	//PCMSK3 |= (1<<PCINT24);		
+	//PCICR |= (1<<PCIE0); 
+	//PCMSK0 |= (1<<PCINT4);	
 
 	for (idx = 0; idx < NUM_SENSOR; idx++){
 		sensors[idx].pulse = 0;
