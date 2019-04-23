@@ -4,7 +4,3 @@
 
 main.c
 
-PWM.c
-
-sensor.c
-
